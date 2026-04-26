@@ -39,11 +39,11 @@ If you want to build Project AeroSense yourself, here is the exact hardware I us
 
 *(Note: The links below are affiliate links. Purchasing through them helps support the IoT Bhai channel and iotbhai.io at no extra cost to you, allowing me to keep creating free tech content!)*
 
-* **ESP32 Development Board:** [Buy on AliExpress](#) | [Buy on Amazon](#)
-* **Sensirion SCD30 Sensor Module (CO2, Temp, RH):** [Buy on AliExpress](#) | [Buy on Amazon](#)
-* **TSL2561 Luminosity Sensor Breakout:** [Buy on AliExpress](#) | [Buy on Amazon](#)
-* **High-Quality Jumper Wires:** [Buy on AliExpress](#) | [Buy on Amazon](#)
-* **Standard Breadboard:** [Buy on AliExpress](#) | [Buy on Amazon](#)
+* **ESP32 Development Board:** [Buy on AliExpress](https://s.click.aliexpress.com/e/_c2IAMVUX) | [Buy on Amazon](https://amzn.to/493Wv5A)
+* **Sensirion SCD30 Sensor Module (CO2, Temp, RH):** [Buy on AliExpress](https://s.click.aliexpress.com/e/_c34JGRGP) | [Buy on Amazon](https://amzn.to/4d6peIH)
+* **TSL2561 Luminosity Sensor Breakout:** [Buy on AliExpress](https://s.click.aliexpress.com/e/_c3e5Wkn1) | [Buy on Amazon](https://amzn.to/4mRg9qB)
+* **High-Quality Jumper Wires:** [Buy on AliExpress](https://s.click.aliexpress.com/e/_c4k9nezN) | [Buy on Amazon](https://amzn.to/4beufhS)
+* **Standard Breadboard:** [Buy on AliExpress](https://s.click.aliexpress.com/e/_c3btL0Lh) | [Buy on Amazon](https://amzn.to/3YTf5Y0)
 
  --- 
 ## 🔌 Hardware Setup & Wiring
