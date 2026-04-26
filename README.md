@@ -33,7 +33,19 @@ Project AeroSense is a complete end-to-end IoT solution designed to monitor envi
 5. **Frontend:** HTML5, Tailwind CSS, ApexCharts.js, Phosphor Icons
 
 ---
+## 🛒 Hardware & Components
 
+If you want to build Project AeroSense yourself, here is the exact hardware I used. 
+
+*(Note: The links below are affiliate links. Purchasing through them helps support the IoT Bhai channel and iotbhai.io at no extra cost to you, allowing me to keep creating free tech content!)*
+
+* **ESP32 Development Board:** [Buy on AliExpress](#) | [Buy on Amazon](#)
+* **Sensirion SCD30 Sensor Module (CO2, Temp, RH):** [Buy on AliExpress](#) | [Buy on Amazon](#)
+* **TSL2561 Luminosity Sensor Breakout:** [Buy on AliExpress](#) | [Buy on Amazon](#)
+* **High-Quality Jumper Wires:** [Buy on AliExpress](#) | [Buy on Amazon](#)
+* **Standard Breadboard:** [Buy on AliExpress](#) | [Buy on Amazon](#)
+
+ --- 
 ## 🔌 Hardware Setup & Wiring
 The ESP32 firmware utilizes two independent hardware I2C buses to prevent address conflicts and ensure stable communication.
 
