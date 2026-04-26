@@ -16,6 +16,13 @@ Project AeroSense is a complete end-to-end IoT solution designed to monitor envi
 * **Hardware Simulator:** Includes a Python-based MQTT simulator (`simulator.py`) for backend and frontend testing without physical hardware.
 
 ---
+## 📸 Dashboard Preview
+
+![AeroSense Main Dashboard](dashboard_main_picture.png)
+*Live telemetry dashboard showing real-time CO2, Temperature, Humidity, and Ambient Light.*
+
+![AeroSense Historical Charts](dashboard_charts_picture.png)
+*Interactive ApexCharts plotting historical environmental data with dual-axis scaling.*
 
 ## 🏗️ System Architecture
 
@@ -120,10 +127,4 @@ python app.py
    const char* mqtt_topic = "greenhouse/telemetry";
 4. Flash the firmware to your ESP32 Dev Module.
 
-## 📸 Dashboard Preview
 
-![AeroSense Main Dashboard](dashboard_main_picture.png)
-*Live telemetry dashboard showing real-time CO2, Temperature, Humidity, and Ambient Light.*
-
-![AeroSense Historical Charts](dashboard_charts_picture.png)
-*Interactive ApexCharts plotting historical environmental data with dual-axis scaling.*
