@@ -86,8 +86,8 @@ The ESP32 firmware utilizes two independent hardware I2C buses to prevent addres
 | | `GPIO 22` | SCL (Bus 0) | I2C Clock |
 | **TSL2561** | `3V3` | Power | Connect to 3.3V rail |
 | | `GND` | Ground | Connect to GND rail |
-| | `GPIO 25` | SDA (Bus 1) | Secondary I2C Data |
-| | `GPIO 26` | SCL (Bus 1) | Secondary I2C Clock |
+| | `GPIO 19` | SDA (Bus 1) | Secondary I2C Data |
+| | `GPIO 18` | SCL (Bus 1) | Secondary I2C Clock |
 
 ### Circuit Diagram
 
