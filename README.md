@@ -25,6 +25,7 @@ Project AeroSense is a complete end-to-end IoT solution designed to monitor envi
 *Interactive ApexCharts plotting historical environmental data with dual-axis scaling.*
 
 ## 🏗️ System Architecture
+![System Architecture](aerosense_architecture.png)
 
 1. **Edge Node:** ESP32 Dev Module (C++ / Arduino framework)
 2. **Broker:** Reyax Cloud MQTT Broker
