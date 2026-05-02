@@ -60,6 +60,10 @@ The ESP32 firmware utilizes two independent hardware I2C buses to prevent addres
 | | `GPIO 25` | SDA (Bus 1) | Secondary I2C Data |
 | | `GPIO 26` | SCL (Bus 1) | Secondary I2C Clock |
 
+## Circuit Diagram
+### Fritzing
+![AeroSense Circuit Diagram](project_aerosense_bb.png)
+
 ---
 
 ## 🚀 Installation & Usage
