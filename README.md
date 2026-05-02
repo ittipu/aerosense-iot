@@ -51,7 +51,7 @@ Project AeroSense is a complete end-to-end IoT solution designed to monitor envi
 ![System Architecture](aerosense_architecture.png)
 
 1. **Edge Node:** ESP32 Dev Module (C++ / Arduino framework)
-2. **Broker:** [Reyax](https://www.reyax.com) Cloud MQTT Broker *(sponsored)*
+2. **Broker:** [RYC1001](https://iotbhai.io/about/) Cloud MQTT Broker *(sponsored)*
 3. **Backend Server:** Python (Flask, Flask-SocketIO, Paho-MQTT, MySQL-Connector)
 4. **Database:** MySQL
 5. **Frontend:** HTML5, Tailwind CSS, ApexCharts.js, Phosphor Icons
@@ -196,8 +196,8 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## 🤝 Sponsors
 
-AeroSense uses the **[Reyax Cloud MQTT Broker](https://www.reyax.com)** for real-time telemetry infrastructure.
+AeroSense uses the **[Reyax Cloud MQTT Broker](https://reyax.com//products/RYC1001)** for real-time telemetry infrastructure.
 
-A big thank you to **[Reyax](https://www.reyax.com)** for sponsoring this project with free cloud MQTT services — their reliable broker made real-time telemetry seamless.
+A big thank you to **[Reyax](https://reyax.com//products/RYC1001)** for sponsoring this project with free cloud MQTT services — their reliable broker made real-time telemetry seamless.
 
-> Interested in sponsoring a future project? Reach out via [iotbhai.io](https://iotbhai.io).
+> Interested in sponsoring a future project? Reach out via [iotbhai.io](https://iotbhai.io/about/).
