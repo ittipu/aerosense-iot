@@ -62,7 +62,7 @@ The ESP32 firmware utilizes two independent hardware I2C buses to prevent addres
 
 ## Circuit Diagram
 ### Fritzing
-![AeroSense Circuit Diagram](project_aerosense_bb.png)
+![AeroSense Circuit Diagram](project_aerosense_bb.jpg)
 
 ---
 
