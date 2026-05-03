@@ -80,11 +80,11 @@ The ESP32 firmware utilizes two independent hardware I2C buses to prevent addres
 
 | Sensor | ESP32 Pin | Function | Notes |
 | :--- | :--- | :--- | :--- |
-| **SCD30** | `VIN` | Power | Connect to 3.3V rail |
+| **SCD30** | `VIN` | Power | Connect to VIN PIN |
 | | `GND` | Ground | Connect to GND rail |
 | | `GPIO 27` | SDA (Bus 0) | I2C Data |
 | | `GPIO 14` | SCL (Bus 0) | I2C Clock |
-| **TSL2561** | `VIN` | Power | Connect to 3.3V rail |
+| **TSL2561** | `VIN` | Power | Connect to VIN rail |
 | | `GND` | Ground | Connect to GND rail |
 | | `GPIO 25` | SDA (Bus 1) | Secondary I2C Data |
 | | `GPIO 26` | SCL (Bus 1) | Secondary I2C Clock |
