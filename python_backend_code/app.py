@@ -22,8 +22,8 @@ DB_CONFIG = {
 MQTT_BROKER = "iot.reyax.com"
 MQTT_PORT = 1883
 MQTT_TOPIC = "greenhouse/telemetry"
-MQTT_USER = "sRkG5DeaQT"
-MQTT_PASS = "H5ZQydxeFM"
+MQTT_USER = "your_mqtt_user"
+MQTT_PASS = "your_mqtt_password"
 
 def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
