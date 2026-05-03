@@ -19,8 +19,8 @@
 
 // --- CONFIGURATION ---
 // Wi-Fi Credentials
-const char* ssid = "tipu_pc";
-const char* password = "tipu1234@";
+const char* ssid = "your_wifi_name";
+const char* password = "your_wifi_password";
 
 // MQTT Broker Settings (Reyax)
 const char* mqtt_server = "iot.reyax.com";
