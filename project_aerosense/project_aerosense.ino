@@ -25,8 +25,8 @@ const char* password = "tipu1234@";
 // MQTT Broker Settings (Reyax)
 const char* mqtt_server = "iot.reyax.com";
 const int mqtt_port = 1883;
-const char* mqtt_user = "sRkG5DeaQT";
-const char* mqtt_pass = "H5ZQydxeFM";
+const char* mqtt_user = "your_mqtt_user";
+const char* mqtt_pass = "your_mqtt_password";
 const char* mqtt_topic = "greenhouse/telemetry";
 
 // Telemetry Settings
