@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project AeroSense | Telemetry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.1/socket.io.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gray: {
+                            850: '#1f2937',
+                            900: '#111827',
+                            950: '#030712',
+                        },
+                        brand: {
+                            cyan: '#06b6d4',
+                            blue: '#3b82f6',
+                            green: '#10b981',
+                            red: '#ef4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for a polished look */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        body {
+            background:
+                radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.14), transparent 45%),
+                radial-gradient(circle at 85% 10%, rgba(59, 130, 246, 0.14), transparent 40%),
+                radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.1), transparent 40%),
+                linear-gradient(140deg, #030712 0%, #0b1220 45%, #030712 100%);
+            background-attachment: fixed;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+            background-size: 38px 38px;
+            mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.65), transparent 95%);
+            opacity: 0.35;
+            z-index: 0;
+        }
+        main, nav { position: relative; z-index: 1; }
+        .glass-panel {
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(75, 85, 99, 0.4);
+        }
+        .chart-panel {
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.72) 0%, rgba(17, 24, 39, 0.56) 100%);
+            border: 1px solid rgba(75, 85, 99, 0.35);
+        }
+        .panel-glow:hover {
+            box-shadow: 0 12px 30px rgba(6, 182, 212, 0.12);
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
+
+    <nav class="glass-panel sticky top-0 z-50 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+                <div class="flex items-center gap-3">
+                    <i class="ph ph-wind text-brand-cyan text-3xl"></i>
+                    <span class="font-bold text-xl tracking-wide">Project <span class="text-brand-cyan">AeroSense</span></span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center gap-2 text-xs text-gray-400">
+                        <i class="ph ph-clock"></i>
+                        <span>Last update:</span>
+                        <span id="last-update-text" class="text-gray-300">--</span>
+                    </div>
+                    <span id="connection-indicator" class="flex h-3 w-3 relative">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-cyan opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-brand-cyan"></span>
+                    </span>
+                    <span id="status-text" class="text-sm text-gray-400">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            
+            <div class="glass-panel panel-glow rounded-2xl p-6 shadow-lg transition-transform hover:scale-[1.02]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-400 font-medium">CO2 Concentration</p>
+                        <h3 class="text-3xl font-bold mt-1" id="val-co2">-- <span class="text-base font-normal text-gray-500">ppm</span></h3>
+                        <p class="text-xs text-brand-green mt-2"><i class="ph ph-trend-down"></i> <span id="trend-co2">Live</span></p>
+                        <p class="text-xs text-gray-500 mt-1" id="state-co2">Waiting for sensor data</p>
+                    </div>
+                    <div class="p-3 bg-gray-800 rounded-xl text-brand-blue">
+                        <i class="ph ph-cloud-warning text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel panel-glow rounded-2xl p-6 shadow-lg transition-transform hover:scale-[1.02]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-400 font-medium">Ambient Light</p>
+                        <h3 class="text-3xl font-bold mt-1" id="val-lux">-- <span class="text-base font-normal text-gray-500">lux</span></h3>
+                        <p class="text-xs text-gray-400 mt-2">TSL2561 Sensor</p>
+                        <p class="text-xs text-gray-500 mt-1" id="state-lux">Waiting for sensor data</p>
+                    </div>
+                    <div class="p-3 bg-gray-800 rounded-xl text-yellow-500">
+                        <i class="ph ph-sun text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel panel-glow rounded-2xl p-6 shadow-lg transition-transform hover:scale-[1.02]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-400 font-medium">Temperature</p>
+                        <h3 class="text-3xl font-bold mt-1" id="val-temp">-- <span class="text-base font-normal text-gray-500">°C</span></h3>
+                        <p class="text-xs text-gray-400 mt-2">SCD30 Sensor</p>
+                        <p class="text-xs text-gray-500 mt-1" id="state-temp">Waiting for sensor data</p>
+                    </div>
+                    <div class="p-3 bg-gray-800 rounded-xl text-brand-red">
+                        <i class="ph ph-thermometer text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel panel-glow rounded-2xl p-6 shadow-lg transition-transform hover:scale-[1.02]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-400 font-medium">Relative Humidity</p>
+                        <h3 class="text-3xl font-bold mt-1" id="val-humidity">-- <span class="text-base font-normal text-gray-500">%</span></h3>
+                        <p class="text-xs text-gray-400 mt-2">SCD30 Sensor</p>
+                        <p class="text-xs text-gray-500 mt-1" id="state-humidity">Waiting for sensor data</p>
+                    </div>
+                    <div class="p-3 bg-gray-800 rounded-xl text-brand-cyan">
+                        <i class="ph ph-drop text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel panel-glow rounded-2xl p-6 shadow-lg transition-transform hover:scale-[1.02] md:col-span-2 lg:col-span-1">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-400 font-medium">Environment Health</p>
+                        <h3 id="env-health-label" class="text-3xl font-bold mt-1 text-gray-200">--</h3>
+                        <p id="env-health-score" class="text-xs text-gray-500 mt-2">Health score: --/100</p>
+                        <p id="env-health-tip" class="text-xs text-gray-500 mt-1">Waiting for sensor data</p>
+                    </div>
+                    <div id="env-health-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-700/70 text-gray-200 border border-gray-600">
+                        Pending
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-4 sm:p-5 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <h2 class="text-xl font-bold text-gray-200">Historical Telemetry</h2>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label class="inline-flex items-center gap-2 text-sm text-gray-300">
+                        <input id="auto-live-toggle" type="checkbox" checked class="accent-cyan-500 w-4 h-4">
+                        Auto live updates
+                    </label>
+                    <select id="timeframe-selector" class="glass-panel text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-cyan cursor-pointer">
+                        <option value="1" class="bg-gray-800">Last 1 Hour</option>
+                        <option value="6" class="bg-gray-800">Last 6 Hours</option>
+                        <option value="24" class="bg-gray-800" selected>Last 24 Hours</option>
+                        <option value="168" class="bg-gray-800">Last 7 Days</option>
+                        <option value="720" class="bg-gray-800">Last 30 Days</option>
+                    </select>
+                    <button id="resume-live-btn" class="hidden rounded-lg px-3 py-2 text-sm font-medium bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/40 hover:bg-brand-cyan/30 transition">
+                        Resume live
+                    </button>
+                </div>
+            </div>
+            <p id="live-mode-note" class="text-xs text-gray-400 mt-3">Live mode is active. New telemetry updates cards and charts automatically.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="chart-panel rounded-2xl p-6 shadow-lg col-span-1 lg:col-span-2">
+                <div class="flex items-center justify-between mb-4 gap-3">
+                    <h2 class="text-lg font-semibold flex items-center gap-2">
+                        <i class="ph ph-thermometer-hot text-brand-red"></i> Temperature & Humidity Profile
+                    </h2>
+                    <span class="text-xs text-gray-400">Dual-axis • zoom enabled</span>
+                </div>
+                <div id="chart-temp-hum" class="w-full h-80"></div>
+            </div>
+
+            <div class="chart-panel rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-4 gap-3">
+                    <h2 class="text-lg font-semibold flex items-center gap-2">
+                        <i class="ph ph-leaf text-brand-green"></i> Carbon Dioxide (CO2) History
+                    </h2>
+                    <span class="text-xs text-gray-400">Threshold: 1000 ppm</span>
+                </div>
+                <div id="chart-co2" class="w-full h-64"></div>
+            </div>
+
+            <div class="chart-panel rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center justify-between mb-4 gap-3">
+                    <h2 class="text-lg font-semibold flex items-center gap-2">
+                        <i class="ph ph-lightbulb text-yellow-500"></i> Illuminance (Lux) Profile
+                    </h2>
+                    <span class="text-xs text-gray-400">Realtime trend</span>
+                </div>
+                <div id="chart-lux" class="w-full h-64"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        const FLASK_SERVER_URL = window.location.protocol.startsWith('http')
+            ? window.location.origin
+            : 'http://localhost:5000';
+        
+        // --- STATE MANAGEMENT ---
+        let telemetryHistory = [];
+        const MAX_HISTORY_POINTS = 288;
+        const MAX_RENDER_POINTS = 80;
+        let autoLiveEnabled = true;
+        let chartFrameQueued = false;
+        let selectedHistoryHours = 24;
+
+        // --- CHART THEME SETTINGS ---
+        // --- CHART THEME SETTINGS ---
+        const commonChartOptions = {
+            chart: { 
+                type: 'area', 
+                // 1. ENABLE THE TOOLBAR FOR INTERACTIVITY
+                toolbar: { 
+                    show: true,
+                    tools: { download: false, selection: true, zoom: true, pan: true, reset: true }
+                }, 
+                background: 'transparent',
+                fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif',
+                animations: { enabled: false }
+            },
+            theme: { mode: 'dark' },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 2 },
+            markers: {
+                size: 0,
+                hover: { sizeOffset: 3 }
+            },
+            legend: {
+                show: true,
+                position: 'top',
+                horizontalAlign: 'left',
+                labels: { colors: '#cbd5e1' }
+            },
+            noData: {
+                text: 'Waiting for telemetry...',
+                align: 'center',
+                verticalAlign: 'middle',
+                style: { color: '#9ca3af', fontSize: '13px' }
+            },
+            
+            // 2. FIX THE X-AXIS (Time)
+            xaxis: { 
+                type: 'datetime',
+                tickAmount: 4,
+                labels: {
+                    datetimeUTC: false, // Forces your local time instead of converting to UTC
+                    format: 'HH:mm',    // Shows clean hours and minutes on the bottom axis
+                    showDuplicates: false,
+                    hideOverlappingLabels: true,
+                    rotate: -15,
+                    style: { colors: '#9ca3af', fontSize: '11px' },
+                    datetimeFormatter: {
+                        year: 'yyyy',
+                        month: 'dd MMM',
+                        day: 'dd MMM',
+                        hour: 'HH:mm'
+                    }
+                },
+                axisBorder: { show: false },
+                axisTicks: { show: true, color: '#64748b' },
+                crosshairs: {
+                    show: true,
+                    stroke: { color: '#22d3ee', width: 1, dashArray: 4 }
+                },
+                tooltip: { enabled: false } // We use the main tooltip instead
+            },
+            
+            // 3. FIX THE HOVER TOOLTIP
+            tooltip: {
+                theme: 'dark',
+                shared: true,
+                intersect: false,
+                x: { 
+                    format: 'dd MMM yyyy, HH:mm:ss' // Shows the exact date and time when you hover!
+                }
+            },
+            
+            grid: {
+                borderColor: '#334155',
+                strokeDashArray: 2,
+                xaxis: { lines: { show: true } },
+                yaxis: { lines: { show: false } }
+            },
+            fill: {
+                type: 'gradient',
+                gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.06, stops: [0, 95] }
+            }
+        };
+
+        // --- INIT CHARTS ---
+        const tempHumChart = new ApexCharts(document.querySelector("#chart-temp-hum"), {
+            ...commonChartOptions,
+            colors: ['#ef4444', '#06b6d4'],
+            series: [
+                { name: 'Temperature (°C)', data: [] }, 
+                { name: 'Humidity (%)', data: [] }
+            ],
+            yaxis: [
+                { 
+                    tickAmount: 5,
+                    labels: { formatter: (value) => (value === null || value === undefined) ? '' : value.toFixed(1) + '°C' },
+                    title: { text: "Temperature", style: { color: '#ef4444' } }
+                },
+                { 
+                    opposite: true, 
+                    tickAmount: 5,
+                    labels: { formatter: (value) => (value === null || value === undefined) ? '' : value.toFixed(1) + '%' },
+                    title: { text: "Humidity", style: { color: '#06b6d4' } }
+                }
+            ],
+            chart: { ...commonChartOptions.chart, height: 360 }
+        });
+        tempHumChart.render();
+
+        const co2Chart = new ApexCharts(document.querySelector("#chart-co2"), {
+            ...commonChartOptions,
+            colors: ['#3b82f6'],
+            series: [{ name: 'CO2 (ppm)', data: [] }],
+            yaxis: { labels: { formatter: (value) => (value === null || value === undefined) ? '' : Math.round(value) } },
+            annotations: {
+                yaxis: [{
+                    y: 1000,
+                    borderColor: '#f59e0b',
+                    strokeDashArray: 4,
+                    label: {
+                        borderColor: '#f59e0b',
+                        style: { color: '#111827', background: '#f59e0b' },
+                        text: 'Air quality caution'
+                    }
+                }]
+            },
+            chart: { ...commonChartOptions.chart, height: 250 }
+        });
+        co2Chart.render();
+
+        const luxChart = new ApexCharts(document.querySelector("#chart-lux"), {
+            ...commonChartOptions,
+            colors: ['#eab308'],
+            series: [{ name: 'Illuminance (Lux)', data: [] }],
+            yaxis: { labels: { formatter: (value) => (value === null || value === undefined) ? '' : Math.round(value) } },
+            chart: { ...commonChartOptions.chart, height: 250 }
+        });
+        luxChart.render();
+
+        // --- UI UPDATE FUNCTIONS ---
+        function getNumber(...values) {
+            for (const value of values) {
+                if (value === null || value === undefined || value === '') continue;
+                const parsed = Number(value);
+                if (Number.isFinite(parsed)) return parsed;
+            }
+            return null;
+        }
+
+        function formatLastUpdate(timestamp) {
+            if (!timestamp) return '--';
+            const date = new Date(timestamp);
+            if (Number.isNaN(date.getTime())) return '--';
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function setMetricValue(id, value, unit, decimals = 0) {
+            const element = document.getElementById(id);
+            if (value === null) {
+                element.innerHTML = `-- <span class="text-base font-normal text-gray-500">${unit}</span>`;
+                return;
+            }
+            const displayedValue = decimals > 0 ? value.toFixed(decimals) : Math.round(value);
+            element.innerHTML = `${displayedValue} <span class="text-base font-normal text-gray-500">${unit}</span>`;
+        }
+
+        function setSensorState(id, isOk) {
+            const element = document.getElementById(id);
+            if (isOk) {
+                element.textContent = 'Sensor healthy';
+                element.classList.remove('text-red-400');
+                element.classList.add('text-brand-green');
+                return;
+            }
+            element.textContent = 'Sensor unavailable';
+            element.classList.remove('text-brand-green');
+            element.classList.add('text-red-400');
+        }
+
+        function computeEnvironmentHealth({ co2, temp, humidity, lux }) {
+            let score = 100;
+            const tips = [];
+
+            if (co2 !== null) {
+                if (co2 > 1500) {
+                    score -= 35;
+                    tips.push('Improve ventilation urgently');
+                } else if (co2 > 1000) {
+                    score -= 20;
+                    tips.push('Open airflow to lower CO2');
+                } else if (co2 > 800) {
+                    score -= 8;
+                }
+            }
+
+            if (temp !== null) {
+                if (temp < 18 || temp > 32) {
+                    score -= 18;
+                    tips.push('Temperature is outside comfort range');
+                } else if (temp < 21 || temp > 28) {
+                    score -= 8;
+                }
+            }
+
+            if (humidity !== null) {
+                if (humidity < 30 || humidity > 75) {
+                    score -= 16;
+                    tips.push('Adjust humidity for plant health');
+                } else if (humidity < 40 || humidity > 65) {
+                    score -= 7;
+                }
+            }
+
+            if (lux !== null) {
+                if (lux < 80) {
+                    score -= 8;
+                    tips.push('Light level is low');
+                }
+            }
+
+            score = Math.max(0, Math.min(100, Math.round(score)));
+
+            if (score >= 85) return { label: 'Excellent', score, tone: 'excellent', tip: tips[0] || 'Environment is stable and healthy' };
+            if (score >= 70) return { label: 'Good', score, tone: 'good', tip: tips[0] || 'Mostly healthy with minor adjustments' };
+            if (score >= 50) return { label: 'Fair', score, tone: 'fair', tip: tips[0] || 'Monitor values and tune settings' };
+            return { label: 'Poor', score, tone: 'poor', tip: tips[0] || 'Conditions need immediate correction' };
+        }
+
+        function updateEnvironmentHealthUI(metrics) {
+            const labelEl = document.getElementById('env-health-label');
+            const scoreEl = document.getElementById('env-health-score');
+            const tipEl = document.getElementById('env-health-tip');
+            const badgeEl = document.getElementById('env-health-badge');
+            const health = computeEnvironmentHealth(metrics);
+
+            labelEl.textContent = health.label;
+            scoreEl.textContent = `Health score: ${health.score}/100`;
+            tipEl.textContent = health.tip;
+
+            badgeEl.className = 'px-3 py-1 rounded-full text-xs font-semibold border';
+            if (health.tone === 'excellent') {
+                badgeEl.classList.add('bg-emerald-500/20', 'text-emerald-300', 'border-emerald-400/40');
+            } else if (health.tone === 'good') {
+                badgeEl.classList.add('bg-cyan-500/20', 'text-cyan-300', 'border-cyan-400/40');
+            } else if (health.tone === 'fair') {
+                badgeEl.classList.add('bg-amber-500/20', 'text-amber-300', 'border-amber-400/40');
+            } else {
+                badgeEl.classList.add('bg-rose-500/20', 'text-rose-300', 'border-rose-400/40');
+            }
+            badgeEl.textContent = health.label;
+        }
+
+        function downsample(rows, limit) {
+            if (rows.length <= limit) return rows;
+            const step = Math.ceil(rows.length / limit);
+            const sampled = [];
+            for (let index = 0; index < rows.length; index += step) {
+                sampled.push(rows[index]);
+            }
+            const lastPoint = rows[rows.length - 1];
+            if (sampled[sampled.length - 1] !== lastPoint) sampled.push(lastPoint);
+            return sampled;
+        }
+
+        function smoothSeries(data, windowSize = 3) {
+            if (data.length <= windowSize) return data;
+            return data.map((point, index) => {
+                const start = Math.max(0, index - windowSize + 1);
+                const window = data.slice(start, index + 1).filter(([, value]) => value !== null && value !== undefined);
+                if (window.length === 0) return point;
+                const avg = window.reduce((sum, [, value]) => sum + value, 0) / window.length;
+                return [point[0], avg];
+            });
+        }
+
+        function updateTopCards(latest) {
+            if (!latest) return;
+
+            const co2 = getNumber(latest.co2, latest.scd_co2);
+            const lux = getNumber(latest.lux, latest.tsl_lux);
+            const temp = getNumber(latest.temp, latest.scd_temp);
+            const humidity = getNumber(latest.humidity, latest.scd_humidity, latest.dht_humidity);
+
+            setMetricValue('val-co2', co2, 'ppm');
+            setMetricValue('val-lux', lux, 'lux');
+            setMetricValue('val-temp', temp, '°C', 1);
+            setMetricValue('val-humidity', humidity, '%', 1);
+
+            setSensorState('state-co2', latest.scd_ok !== false);
+            setSensorState('state-temp', latest.scd_ok !== false);
+            setSensorState('state-humidity', latest.scd_ok !== false);
+            setSensorState('state-lux', latest.lux_ok !== false);
+            updateEnvironmentHealthUI({ co2, temp, humidity, lux });
+            document.getElementById('last-update-text').textContent = formatLastUpdate(latest.timestamp);
+        }
+
+        function updateCharts() {
+            const rows = downsample(telemetryHistory, MAX_RENDER_POINTS);
+            const tempData = smoothSeries(rows.map(row => [new Date(row.timestamp).getTime(), getNumber(row.temp, row.scd_temp)]), 4);
+            const humData = smoothSeries(rows.map(row => [new Date(row.timestamp).getTime(), getNumber(row.humidity, row.scd_humidity, row.dht_humidity)]), 4);
+            const co2Data = smoothSeries(rows.map(row => [new Date(row.timestamp).getTime(), getNumber(row.co2, row.scd_co2)]), 3);
+            const luxData = smoothSeries(rows.map(row => [new Date(row.timestamp).getTime(), getNumber(row.lux, row.tsl_lux)]), 3);
+            const fallbackWindowMs = Math.max(60 * 60 * 1000, selectedHistoryHours * 60 * 60 * 1000);
+            const firstPointTime = rows.length > 0
+                ? new Date(rows[0].timestamp).getTime()
+                : (Date.now() - fallbackWindowMs);
+            const lastPointTime = rows.length > 0
+                ? new Date(rows[rows.length - 1].timestamp).getTime()
+                : Date.now();
+            const dataRangeMs = Math.max(lastPointTime - firstPointTime, 5 * 60 * 1000);
+            const paddingMs = Math.max(Math.round(dataRangeMs * 0.08), 60 * 1000);
+            const startTime = firstPointTime - paddingMs;
+            const endTime = lastPointTime + paddingMs;
+            const xWindow = { xaxis: { ...commonChartOptions.xaxis, min: startTime, max: endTime, tickAmount: 6 } };
+
+            tempHumChart.updateOptions(xWindow, false, false);
+            co2Chart.updateOptions(xWindow, false, false);
+            luxChart.updateOptions(xWindow, false, false);
+
+            tempHumChart.updateSeries([
+                { name: 'Temperature (°C)', data: tempData },
+                { name: 'Humidity (%)', data: humData }
+            ]);
+            co2Chart.updateSeries([{ name: 'CO2 (ppm)', data: co2Data }]);
+            luxChart.updateSeries([{ name: 'Illuminance (Lux)', data: luxData }]);
+        }
+
+        function queueChartUpdate() {
+            if (chartFrameQueued) return;
+            chartFrameQueued = true;
+            requestAnimationFrame(() => {
+                chartFrameQueued = false;
+                updateCharts();
+            });
+        }
+
+        // --- SOCKET.IO INTEGRATION ---
+        const socket = io(FLASK_SERVER_URL);
+        const statusText = document.getElementById('status-text');
+        const connectionIndicator = document.getElementById('connection-indicator');
+        const timeframeSelector = document.getElementById('timeframe-selector');
+        const autoLiveToggle = document.getElementById('auto-live-toggle');
+        const resumeLiveBtn = document.getElementById('resume-live-btn');
+        const liveModeNote = document.getElementById('live-mode-note');
+
+        function setLiveModeUI() {
+            if (autoLiveEnabled) {
+                resumeLiveBtn.classList.add('hidden');
+                liveModeNote.textContent = 'Live mode is active. New telemetry updates cards and charts automatically.';
+                return;
+            }
+            resumeLiveBtn.classList.remove('hidden');
+            liveModeNote.textContent = 'Auto live updates are paused. Select a timeframe or click Resume live.';
+        }
+
+        socket.on('connect', () => {
+            statusText.innerText = "Live Connected";
+            statusText.classList.replace('text-gray-400', 'text-brand-cyan');
+            statusText.classList.replace('text-red-500', 'text-brand-cyan');
+            connectionIndicator.children[0].classList.replace('bg-brand-cyan', 'bg-brand-green');
+            connectionIndicator.children[0].classList.replace('bg-red-500', 'bg-brand-green');
+            connectionIndicator.children[1].classList.replace('bg-brand-cyan', 'bg-brand-green');
+            connectionIndicator.children[1].classList.replace('bg-red-500', 'bg-brand-green');
+        });
+
+        socket.on('disconnect', () => {
+            statusText.innerText = "Disconnected";
+            statusText.classList.replace('text-brand-cyan', 'text-red-500');
+            connectionIndicator.children[0].classList.replace('bg-brand-green', 'bg-red-500');
+            connectionIndicator.children[1].classList.replace('bg-brand-green', 'bg-red-500');
+        });
+
+        socket.on('initial_data', (historyPayload) => {
+            telemetryHistory = historyPayload;
+            if (telemetryHistory.length > 0) {
+                updateTopCards(telemetryHistory[telemetryHistory.length - 1]);
+                queueChartUpdate();
+            }
+        });
+
+        socket.on('live_data', (latestPayload) => {
+            if (!autoLiveEnabled) return;
+            telemetryHistory.push(latestPayload);
+            if (telemetryHistory.length > MAX_HISTORY_POINTS) telemetryHistory.shift();
+            updateTopCards(latestPayload);
+            queueChartUpdate();
+        });
+
+        timeframeSelector.addEventListener('change', (e) => {
+            selectedHistoryHours = parseInt(e.target.value, 10) || 24;
+            autoLiveEnabled = false;
+            autoLiveToggle.checked = false;
+            setLiveModeUI();
+            socket.emit('request_history', { hours: selectedHistoryHours });
+        });
+
+        socket.on('history_response', (historyPayload) => {
+            telemetryHistory = historyPayload;
+            if (telemetryHistory.length > 0) updateTopCards(telemetryHistory[telemetryHistory.length - 1]);
+            queueChartUpdate();
+        });
+
+        autoLiveToggle.addEventListener('change', (event) => {
+            autoLiveEnabled = event.target.checked;
+            setLiveModeUI();
+        });
+
+        resumeLiveBtn.addEventListener('click', () => {
+            autoLiveEnabled = true;
+            autoLiveToggle.checked = true;
+            timeframeSelector.value = '24';
+            selectedHistoryHours = 24;
+            setLiveModeUI();
+            socket.emit('request_history', { hours: 24 });
+        });
+
+        setLiveModeUI();
+    </script>
+</body>
+</html>
