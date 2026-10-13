@@ -14,8 +14,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # --- 2. CONFIGURATION ---
 DB_CONFIG = {
     'host': 'localhost',
-    'user': 'tipu',
-    'password': 'tipu',
+    'user': 'YOUR_DB_USER',
+    'password': 'YOUR_DB_PASSWORD',
     'database': 'iot_dashboard'
 }
 
